@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktives Quiz: Entwicklungspsychologie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .option-btn:hover:not(:disabled) {
+            background-color: #f3f4f6;
+            border-color: #3b82f6;
+        }
+        .correct {
+            background-color: #10b981 !important;
+            color: white !important;
+            border-color: #059669 !important;
+        }
+        .wrong {
+            background-color: #ef4444 !important;
+            color: white !important;
+            border-color: #dc2626 !important;
+        }
+        .progress-bar {
+            transition: width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center p-4">
+
+    <!-- Header -->
+    <div class="w-full max-w-2xl bg-white rounded-xl shadow-sm p-6 mb-6">
+        <h1 class="text-2xl font-bold text-slate-800">Quiz: Entwicklungspsychologie</h1>
+        <p class="text-slate-500 text-sm">Vorbereitung für Fachlehrer (Geistige Entwicklung)</p>
+        
+        <div class="mt-4 bg-slate-100 rounded-full h-2.5 w-full overflow-hidden">
+            <div id="progress" class="progress-bar bg-blue-600 h-2.5 w-0"></div>
+        </div>
+        <div class="flex justify-between mt-2 text-xs font-medium text-slate-400">
+            <span id="progress-text">Frage 1 von 54</span>
+            <span id="score-text">Punkte: 0</span>
+        </div>
+    </div>
+
+    <!-- Quiz Card -->
+    <div id="quiz-container" class="w-full max-w-2xl bg-white rounded-xl shadow-md p-8 transition-all duration-300">
+        <div id="question-box">
+            <h2 id="question-text" class="text-xl font-semibold text-slate-800 mb-6">Lade Fragen...</h2>
+            <div id="options-container" class="grid grid-cols-1 gap-3">
+                <!-- Buttons werden hier eingefügt -->
+            </div>
+        </div>
+
+        <div id="feedback-box" class="hidden mt-6 p-4 rounded-lg text-sm font-medium"></div>
+
+        <button id="next-btn" class="hidden mt-8 w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg">
+            Nächste Frage
+        </button>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="result-screen" class="hidden w-full max-w-2xl bg-white rounded-xl shadow-md p-10 text-center">
+        <h2 class="text-3xl font-bold text-slate-800 mb-4">Quiz beendet!</h2>
+        <div class="text-6xl font-black text-blue-600 mb-6" id="final-score">0 / 54</div>
+        <p id="result-comment" class="text-slate-600 mb-8 text-lg"></p>
+        <button onclick="location.reload()" class="bg-slate-800 text-white px-8 py-3 rounded-lg font-bold hover:bg-slate-900 transition-all">
+            Nochmal versuchen
+        </button>
+    </div>
+
+    <script>
+        const questions = [
+            { q: "Bei welcher Theorie der Entwicklungspsychologie kann man das Lazarus Modell anwenden?", a: ["Domänenspezifischen Entwicklungstheorie", "Bewältigungstheorie nach Havighurst", "Systemorientierte Theorie nach Bronfenbrenner", "Kognitive Theorien nach Piaget", "Entwicklungstheorie von Erikson"], c: 1 },
+            { q: "Aussage: „Alle Menschen nehmen das Baby mit gleichem Gesichtsabstand auf den Arm“. Zu welcher Entwicklungstheorie passt diese Aussage?", a: ["Entwicklungstheorie nach Erikson", "Systemorientierte Theorie nach Bronfenbrenner", "Humanethologie", "Bewältigungstheorie", "Kognitive Theorie"], c: 2 },
+            { q: "Welche Theorie baut auf welche auf?", a: ["Die Theorie von Piaget auf Erikson?", "Bewältigungstheorie auf die Humanethologie", "Kognitive Theorie von Piaget auf die Systemorientierte Theorie von Bronfenbrenner", "Die von Erikson auf die Psychoanalyse von Freud", "Überhaupt keine"], c: 3 },
+            { q: "Die Beschreibung der Entwicklung in Stufen beinhaltet vor allem die Darstellung ……", a: ["a) quantitativer Veränderungen", "b) keiner Veränderungen", "c) qualitativer Veränderungen", "d) schulischer Veränderungen", "e) zirkulärer Veränderungen"], c: 2 },
+            { q: "Die Ontogenese...", a: ["a) nur A ist richtig", "b) nur E ist richtig", "c) A und E sind richtig", "d) D und E sind richtig", "e) A, C und D sind richtig"], c: 2, info: "A) Entwicklung von befruchteter Eizelle bis Tod; E) beschreibt Zeitstrecke." },
+            { q: "Welche Erfahrung fördert nach Erikson im 1. Lebensjahr die Entwicklung nach Urvertrauen?", a: ["a) Wenn das Kind regelmäßig und verlässlich gefüttert und getröstet wird", "b) Wenn das Kind frühzeitig selbstständig wird", "c) Wenn das Kind in der Schule Anerkennung bekommt", "d) Wenn das Kind seine Identität in der Jugend findet", "e) Wenn das Kind sich an die Sauberkeitserziehung gewöhnt"], c: 0 },
+            { q: "Welcher Unterschied besteht zwischen Freud und Erikson? (Beide treffen zu)", a: ["a) Freud beschreibt Entwicklung nur in Kindheit, Erikson über gesamte Lebensspanne", "b) Freud betont psychosexuell, Erikson psychosozial", "c) Erikson ist gegen die Psychoanalyse", "d) Freud erfand die Humanethologie", "e) Nur a) und b) sind richtig"], c: 4 },
+            { q: "Was ist die zentrale Annahme der domänenspezifischen Theorien?", a: ["Entwicklung verläuft in universellen Stufen", "Entwicklung geschieht bereichsabhängig (z.B. Sprache, Physik)", "Entwicklung ist rein genetisch bedingt", "Entwicklung ist nur durch Belohnung möglich", "Es gibt keine Domänen"], c: 1 },
+            { q: "Ein Kind beobachtet ein Experiment, bei dem zwei Kugeln zu einer zusammenschmelzen. Welche Reaktion erwarten sie?", a: ["Es schaut weg", "Es betrachtet das Geschehen mit erhöhter Aufmerksamkeit", "Es fängt an zu weinen", "Es erkennt sofort die physikalische Formel", "Gar keine Reaktion"], c: 1 },
+            { q: "Welche Phase gehört nicht zu Freuds Theorie der Psychoanalyse?", a: ["Orale Phase", "Anale Phase", "Sensumotorische Phase", "Latenz Phase", "Genitale Phase"], c: 2 },
+            { q: "Situation: Anna sieht ein großes Stück Schokokuchen. Welche Instanz nach Freud drängt sie dazu, den Kuchen sofort zu essen?", a: ["Ich", "Über-Ich", "Es", "Gewissen", "Realität"], c: 2 },
+            { q: "Was bedeutet Coping im Stressbewältigungsmodell?", a: ["Entspannung", "Bewältigungsstrategie", "Leistungsmotivation", "Anpassungsstörung", "Verdrängung"], c: 1 },
+            { q: "An welchem System ist der Mensch nicht direkt beteiligt, hat jedoch Auswirkungen auf seine persönlichen Lebensbereiche?", a: ["Mikrosystem", "Mesosystem", "Exosystem", "Makrosystem", "Chronosystem"], c: 2 },
+            { q: "In welchem Alter findet die Orale Phase nach der Psychoanalyse von Freud statt?", a: ["a) 0 - 1 Jahre", "b) 2 - 3 Jahre", "c) 4 - 5 Jahre", "d) 6 - 12 Jahre", "e) ab 13 Jahre"], c: 0 },
+            { q: "Welches System nach Bronfenbrenner gibt es nicht?", a: ["a) Mikrosystem", "b) Exosystem", "c) Intersystem", "d) Makrosystem", "e) Chronosystem"], c: 2 },
+            { q: "Das Anforderungs-Bewältigungsmodell nach Lazarus und Folkman/Laurier umfasst…", a: ["Nur eine emotionale Reaktion", "Eine primäre und sekundäre Bewertung", "Ausschließlich körperliche Reaktionen", "Einen genetischen Bauplan", "Keine Kognition"], c: 1 },
+            { q: "Welche Entwicklungsphase gehört nicht in die Einteilung der Psychoanalyse nach Freud?", a: ["Latenzphase", "Phallische Phase", "Präoperationale Phase", "Genitale Phase", "Anale Phase"], c: 2 },
+            { q: "Wie viele Theorien der Entwicklungspsychologie gibt es laut Modul?", a: ["3", "5", "7", "10", "12"], c: 2 },
+            { q: "Was beinhaltet das „Mesosystem“ bei der Systemebene (von Bronfenbrenner)?", a: ["a) Wechselwirkungen zwischen Mikrosystemen (z.B. Schule/Elternhaus)", "b) Die biologische Ausstattung", "c) Kulturelle Werte einer Gesellschaft", "d) Die Zeitachse", "e) Nur die Geschwisterbeziehung"], c: 0 },
+            { q: "Welcher Bereich wurde von Bronfenbrenner NICHT als Teil des Modells formuliert?", a: ["a) Mikrosystem", "b) Mesosystem", "c) Metasystem", "d) Exosystem", "e) Makrosystem"], c: 2 },
+            { q: "Akkommodation bedeutet in der Entwicklungstheorie nach Jean Piaget…", a: ["Aufnahme in ein bestehendes Schema", "Anpassung der vorhandenen Schemata an neue Sachverhalte", "Verweigerung neuer Inhalte", "Rein biologisches Wachstum", "Verlust von Wissen"], c: 1 },
+            { q: "Was beinhaltet das „Mesosystem“ bei der Systemebene?", a: ["Unmittelbare Umgebung", "Wechselwirkungen zwischen Lebensbereichen (Zwischensystem)", "Politik und Gesetze", "Lebenslaufereignisse", "Innere Triebe"], c: 1 },
+            { q: "Wie lautet die richtige Reihenfolge der Phasen nach Freud?", a: ["Oral, Anal, Phallisch, Latenz, Genital", "Anal, Oral, Latenz, Phallisch, Genital", "Oral, Phallisch, Anal, Genital, Latenz", "Latenz, Oral, Anal, Phallisch, Genital", "Oral, Anal, Genital, Latenz, Phallisch"], c: 0 },
+            { q: "Was passiert, wenn ein Kind in eine psychosoziale Krise gerät und diese nicht ausreichend löst?", a: ["Es wird sofort krank", "Es nimmt das Problem mit bis ins Erwachsenenalter", "Es vergisst es einfach", "Es löst sich von selbst", "Es hat keine Auswirkungen"], c: 1 },
+            { q: "Welche Aussage beschreibt KEIN physikalisches Prinzip (Kontinuität/Solidität/Schwerkraft)?", a: ["Objekte bewegen sich auf kontinuierlichen Pfaden", "Objekte können plötzlich an einer anderen Stelle erscheinen", "Objekte sind solide Körper", "Objekte fallen nach unten, wenn sie nicht gestützt sind", "Zwei Objekte können nicht denselben Raum einnehmen"], c: 1 },
+            { q: "Welche Aussage trifft zu? (Bioökologisches Modell)", a: ["Das Chronosystem stellt die Zeitdimension dar", "Das Exosystem beschreibt indirekte Einflüsse", "Das Mikrosystem ist die weiteste Ebene", "Nur a) und b) sind richtig", "Alle sind falsch"], c: 3 },
+            { q: "Welches Beispiel beschreibt ein angeborenes Verhaltensmuster?", a: ["Klavierspielen", "Frühe Eltern-Kind-Interaktion / Bindungsverhalten", "Fahrradfahren", "Lesen", "Schuhe binden"], c: 1 },
+            { q: "Was versteht man unter „intermodaler Wahrnehmung“?", a: ["Wahrnehmung nur durch Hören", "Integration von Infos aus zwei oder mehr Sinnesmodalitäten", "Wahrnehmung bei geschlossenen Augen", "Gestörte Wahrnehmung", "Wahrnehmung von Schmerz"], c: 1 },
+            { q: "Wann beginnt die Fähigkeit zur intermodalen Wahrnehmung typischerweise?", a: ["Erst mit 3 Jahren", "Bereits im Säuglingsalter", "Ab der Pubertät", "Mit der Einschulung", "In der Rente"], c: 1 },
+            { q: "Welches Beispiel zeigt eine intermodale Wahrnehmung?", a: ["Ein Bild im Museum sehen", "Musik hören", "Einen Ball sehen, hören und fühlen beim Aufprall", "Sich an den Namen erinnern", "Schlafen"], c: 2 },
+            { q: "Was ist das Grundproblem der präoperationalen Entwicklungsstufe?", a: ["Zu viel Logik", "Zentrierung auf eine Dimension", "Fehlendes Kurzzeitgedächtnis", "Objektpermanenz", "Hypothetisches Denken"], c: 1 },
+            { q: "Welches Merkmal passt NICHT in die präoperationale Phase?", a: ["Egozentrismus", "Animismus", "Mehrere Dimensionen gleichzeitig berücksichtigen", "Zentrierung", "Irreversibilität"], c: 2 },
+            { q: "Welche Aussage passt nicht zur präoperationalen Entwicklungsphase?", a: ["Denken ist anschaulich", "Invarianzbegriff ist bereits voll entwickelt", "Magisches Denken ist vorhanden", "Egozentrismus dominiert", "Das Denken ist irreversibel"], c: 1 },
+            { q: "Worauf basiert zunächst die Kategorisierung?", a: ["Rein auf Namen", "Äußerliche Aspekte, dann funktionelle Aspekte", "Nur auf dem Geruch", "Auf mathematischen Formeln", "Gar keine Basis"], c: 1 },
+            { q: "Woran erkennt man den Egozentrismus in der präoperationalen Phase?", a: ["Kind teilt seine Süßigkeiten nicht", "Kind beschreibt Szene nur aus seiner eigenen Sicht", "Kind redet nicht mit anderen", "Kind will alles alleine machen", "Kind weint viel"], c: 1 },
+            { q: "Typisches Denken in der präoperationalen Phase?", a: ["Stark am aktuellen Zustand orientiert, wenig prozesshaft", "Vollständig logisch-abstrakt", "Wissenschaftlich-analytisch", "Reflektiert Metaphorik", "Kein Denken vorhanden"], c: 0 },
+            { q: "Merkmal der konkret-operationalen Phase (7-11 J.)?", a: ["Hypothetische Deduktion", "Logische Operationen auf konkrete Gegenstände", "Rein sensomotorische Reflexe", "Völliger Egozentrismus", "Keine Mengenerhaltung"], c: 1 },
+            { q: "Fähigkeit der formal-operationalen Phase (ab 12 J.)?", a: ["Greifen nach Gegenständen", "Systematisch Variablen verändern und hypothetisch denken", "Nur am Bild kleben", "Ausschließlich magisches Denken", "Keine Logik"], c: 1 },
+            { q: "Was ist induktives Schlussfolgern?", a: ["Vom Allgemeinen zum Besonderen", "Vom Besonderen zum Allgemeinen", "Gar kein Schluss", "Immer falsch", "Mathematische Division"], c: 1 },
+            { q: "Was lernen Kinder in der sensomotorischen Phase?", a: ["Quantenphysik", "Objektpermanenz", "Invarianz", "Abstrakte Ethik", "Zentrierung"], c: 1 },
+            { q: "Kausales Denken während der präoperationalen Phase?", a: ["Gar nicht vorhanden", "Zweckgebunden und mit naiven Vorstellungen verbunden", "Rein wissenschaftlich", "Nur durch Zufall", "Erst ab 15 Jahren"], c: 1 },
+            { q: "Phänomen der Egozentrik (Präoperational)?", a: ["Kind ist böse", "Kind glaubt, alle haben die gleichen Gedanken wie es selbst", "Kind will immer gewinnen", "Kind schämt sich", "Kind versteckt sich"], c: 1 },
+            { q: "Was gehört NICHT zu den präoperationalen Entwicklungsstufen?", a: ["Symbolfunktion", "Kompetenz zur Planung komplexer Handlungsabläufe", "Egozentrismus", "Zentrierung", "Animismus"], c: 1 },
+            { q: "Egozentrik bedeutet...", a: ["Selbstverliebt sein", "Gedanken anderer nicht von eigenen unterscheiden können", "Keine Freunde haben", "Sehr laut sein", "Nur Schokolade essen"], c: 1 },
+            { q: "Reihenfolge Piaget?", a: ["Sensumotorisch, Präoperational, Konkret-op., Formal-op.", "Präoperational, Sensumotorisch, Konkret-op., Formal-op.", "Formal, Konkret, Präoperational, Sensumotorisch", "Anal, Oral, Phallisch, Latenz", "Gibt keine Reihenfolge"], c: 0 },
+            { q: "Peerbeziehungen im Grundschulalter?", a: ["Rein egoistisch", "Geprägt von gegenseitigem Vertrauen und Kooperation", "Existieren nicht", "Nur Kampf um Spielzeug", "Nur durch Eltern gesteuert"], c: 1 },
+            { q: "Was beschreibt die propriozeptive Wahrnehmung?", a: ["Hören von Musik", "Wahrnehmung von Körperbewegung und Lage im Raum", "Sehen von Farben", "Riechen von Essen", "Schmecken von Süßem"], c: 1 },
+            { q: "Was ist KEIN Punkt von Selmans Stufenmodell?", a: ["Egozentrische Perspektive", "Sozial-informative Perspektive", "Theory of Mind (als Stufenname)", "Wechselseitige Perspektive", "Gesellschaftliche Perspektive"], c: 2 },
+            { q: "Was gehört NICHT zum Ökopsychologischen Ansatz (Bronfenbrenner)?", a: ["Mikrosystem", "Exosystem", "Metasystem", "Chronosystem", "Makrosystem"], c: 2 },
+            { q: "Verhalten wird durch Verstärkung erlernt. Wer sagte das?", a: ["Piaget", "Skinner (Behaviorismus)", "Freud", "Erikson", "Vygotskij"], c: 1 },
+            { q: "Wahrnehmung der Körperlage?", a: ["Exterozeption", "Propriozeption", "Gustatorik", "Olfaktorik", "Visus"], c: 1 },
+            { q: "Was gehört NICHT zur Exterozeption (Außenwahrnehmung)?", a: ["Hören", "Sehen", "Vestibuläres System (Gleichgewicht/Innen)", "Riechen", "Schmecken"], c: 2 },
+            { q: "Identitätsstadium nach Marcia: keine Krise, keine Verpflichtung?", a: ["Erarbeitete Identität", "Diffuse Identität", "Moratorium", "Übernommene Identität", "Kritische Identität"], c: 1 },
+            { q: "Verhaltensphänotyp bei genetischem Syndrom...", a: ["Tritt immer auf", "Tritt nie auf", "Tritt mit höherer Wahrscheinlichkeit auf", "Ist nur Einbildung", "Verschwindet mit 5 Jahren"], c: 2 }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let canAnswer = true;
+
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const nextBtn = document.getElementById('next-btn');
+        const feedbackBox = document.getElementById('feedback-box');
+        const progressBar = document.getElementById('progress');
+        const progressText = document.getElementById('progress-text');
+        const scoreText = document.getElementById('score-text');
+        const quizContainer = document.getElementById('quiz-container');
+        const resultScreen = document.getElementById('result-screen');
+        const finalScore = document.getElementById('final-score');
+        const resultComment = document.getElementById('result-comment');
+
+        function loadQuestion() {
+            canAnswer = true;
+            nextBtn.classList.add('hidden');
+            feedbackBox.classList.add('hidden');
+            
+            const q = questions[currentQuestion];
+            questionText.innerText = q.q;
+            optionsContainer.innerHTML = '';
+
+            q.a.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-4 rounded-lg border-2 border-slate-200 text-slate-700 font-medium transition-all duration-200";
+                btn.innerText = option;
+                btn.onclick = () => selectOption(index);
+                optionsContainer.appendChild(btn);
+            });
+
+            // Update Progress
+            const progressPercent = ((currentQuestion + 1) / questions.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            progressText.innerText = `Frage ${currentQuestion + 1} von ${questions.length}`;
+        }
+
+        function selectOption(index) {
+            if (!canAnswer) return;
+            canAnswer = false;
+
+            const q = questions[currentQuestion];
+            const buttons = optionsContainer.getElementsByClassName('option-btn');
+            
+            if (index === q.c) {
+                buttons[index].classList.add('correct');
+                score++;
+                showFeedback(true);
+            } else {
+                buttons[index].classList.add('wrong');
+                buttons[q.c].classList.add('correct');
+                showFeedback(false);
+            }
+
+            scoreText.innerText = `Punkte: ${score}`;
+            nextBtn.classList.remove('hidden');
+        }
+
+        function showFeedback(isCorrect) {
+            feedbackBox.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-emerald-50 text-emerald-700 border border-emerald-200";
+                feedbackBox.innerText = "Richtig! Gut gemacht.";
+            } else {
+                feedbackBox.className = "mt-6 p-4 rounded-lg text-sm font-medium bg-red-50 text-red-700 border border-red-200";
+                feedbackBox.innerText = "Leider falsch. Die markierte Antwort ist die richtige Lösung.";
+            }
+        }
+
+        nextBtn.onclick = () => {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        };
+
+        function showResults() {
+            quizContainer.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            finalScore.innerText = `${score} / ${questions.length}`;
+
+            let comment = "";
+            const percent = (score / questions.length) * 100;
+            if (percent === 100) comment = "Perfekt! Du bist ein Experte der Entwicklungspsychologie!";
+            else if (percent >= 80) comment = "Sehr gut! Du bist bestens für die Prüfung vorbereitet.";
+            else if (percent >= 50) comment = "Ganz gut, aber schau dir die falsch beantworteten Themen nochmal an.";
+            else comment = "Du solltest die Unterlagen noch einmal gründlich durchgehen.";
+            
+            resultComment.innerText = comment;
+        }
+
+        // Start
+        window.onload = loadQuestion;
+    </script>
+</body>
+</html>
